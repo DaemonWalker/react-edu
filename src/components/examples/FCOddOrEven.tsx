@@ -5,5 +5,13 @@ interface IProps {
 }
 
 export const FCOddOrEven: FC<IProps> = ({ num }) => {
-    return (<label>{num} is an {num % 2 === 0 ? "even" : "odd"} number</label>)
+    return (
+        <>
+            {
+                num % 2 === 0 ?
+                    <label>{num} is an even number</label> :
+                    <label>{num} is an odd number</label>
+            }
+        </>
+    )
 }
