@@ -835,6 +835,10 @@ export const FCFormRegister: FC = () => {
 
 页面被销毁时调用的方法，用于清理用，比如页面上加载了定时器，在这个事件里面我们可以解除定时器
 
+### componentWillReceiveProps
+
+这个用于当组件的Props更新时会触发，我们可以用于当Props变更时更新State
+
 ## 函数组件
 
 ### useEffect(action,props?)
@@ -847,6 +851,32 @@ useEffect的第一个参数为一个方法，我们可以在这里面做加载�
 
 但是不难发现，如果只有这一个参数，页面每次渲染之后这些方法都会被再次执行，严重影响性能
 所以我们需要第二个参数，他是一个数组，目的是只有在数组里面的对象发生变化时才去调用第一个函数，如果数组为空，那么只有在页面加载和页面
+
+```tsx
+import { FC, useEffect, useState } from "react";
+
+interface IProps {
+    name: string;
+}
+
+export const Child1: FC<IProps> = ({ name }) => {
+    const [tel, setTel] = useState("");
+    useEffect(() => {
+        setTel(name + tel);
+    }, [name])
+    return (
+        <div>
+            <div>
+                <span>name: {name}</span>
+            </div>
+            <div>
+                <label>tel</label>
+                <input type="text" value={tel} onChange={e => setTel(e.target.value)}></input>
+            </div>
+        </div>
+    );
+}
+```
 
 
 

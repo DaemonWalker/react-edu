@@ -3,11 +3,12 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { Simple } from './pages/Simple';
+import { Simple } from './pages/ReduxSimple';
+import { HookExample } from './pages/HookExample';
 
 ReactDOM.render(
     <React.StrictMode>
-        <Simple />
+        <HookExample />
     </React.StrictMode>,
     document.getElementById('root')
 );
