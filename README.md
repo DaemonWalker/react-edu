@@ -821,17 +821,286 @@ export const FCFormRegister: FC = () => {
 
 # 生命周期简述
 
-## constructor
+## class 组件
+
+### constructor
 
 顾名思义，构造函数
 
-## componentDidMount
+### componentDidMount
 
 类似与`JQuery`里面的`$(document).ready(fuction())`，页面显示后调用的事件，推荐在这里加载数据
 
-## componentWillUnmount
+### componentWillUnmount
 
 页面被销毁时调用的方法，用于清理用，比如页面上加载了定时器，在这个事件里面我们可以解除定时器
+
+## 函数组件
+
+### useEffect(action,props?)
+
+在函数组件中没有class组件中`componentDidMount`、`componentWillUnmount`、`componentWillUnmount`等事件，他们都可以用useEffect进行实现
+
+> 与 `componentDidMount`、`componentDidUpdate` 不同的是，传给 `useEffect` 的函数会在浏览器完成布局与绘制**之后**，在一个延迟事件中被调用。
+
+useEffect的第一个参数为一个方法，我们可以在这里面做加载数据、清理订阅、刷新组件等多种操作
+
+但是不难发现，如果只有这一个参数，页面每次渲染之后这些方法都会被再次执行，严重影响性能
+所以我们需要第二个参数，他是一个数组，目的是只有在数组里面的对象发生变化时才去调用第一个函数，如果数组为空，那么只有在页面加载和页面
+
+
+
+# Redux
+
+如果做过vue，那这个跟vuex类似；如果做过微服务，这玩意跟消息总线差不多；如果用过MQ，这玩意跟MQ有点像
+
+我个人的理解是一个数据集合，大家把数据都放在里面，然后如果有一个数据发生变化，所有注册的组件都会受到通知
+
+最最简单的例子就是一个控件的值变了，其他的控件值也跟着变
+
+在React中，为了方便我们使用，可以引用`React-Redux`包方便我们的开发
+
+## 我们什么时候要用Redux
+
+> Redux 是一个有用的架构，但不是非用不可。事实上，大多数情况，你可以不用它，只用 React 就够了。曾经有人说过这样一句话
+>
+> > 如果你不知道是否需要 Redux，那就是不需要它。
+>
+> Redux 的创造者 Dan Abramov 又补充了一句
+>
+> > 只有遇到 React 实在解决不了的问题，你才需要 Redux 
+
+如果UI层面逻辑非常简单，没有很多组件之间的交互，那么不推荐使用Redux
+
+以下的场景使用Redux
+
+> - 用户的使用方式复杂
+> - 不同身份的用户有不同的使用方式（比如普通用户和管理员）
+> - 多个用户之间可以协作
+> - 与服务器大量交互，或者使用了WebSocket
+> - View要从多个来源获取数据
+
+从组件的角度
+
+> - 某个组件的状态，需要共享
+> - 某个状态需要在任何地方都可以拿到
+> - 一个组件需要改变全局状态
+> - 一个组件需要改变另一个组件的状态
+
+## Reducer
+
+reducer本质是一个方法，告诉redux如何去处理数据
+
+```typescript
+export interface CounterAction {
+    type: "INC" | "DEC";
+}
+
+const counter = (state: number, action: CounterAction): number => {
+    console.log("counter", state, action);
+    switch (action.type) {
+        case "INC":
+            return state + 1;
+        case "DEC":
+            return state - 1;
+        default:
+            return state ?? 0;
+    }
+};
+```
+
+首先我们在`CounterAction`中定义几种操作类型，就像数据库的增删改查一样，在下面的方法中根据不同的操作类型进行不同的操作
+
+### 注意事项
+
+####  默认值
+
+`switch`中的`default`情况要考虑`state`是`undefined`的情况，所以要给一个默认值，觉得这么写容易忘，那直接写在参数里面也可以
+
+```typescript
+const counter = (state: number = 0, action: CounterAction): number =>
+```
+
+#### 返回值
+
+由于redux通过检查返回值的引用地址是否变化来判断state是否变化，所以我们一定要返回新的对象，而不是在原有的基础上修改
+
+```typescript
+const correct = (state: ReducerState | undefined, action: CorrectAction): ReducerState => {
+    switch (action?.type) {
+        case "SetName":
+            return {
+                ...state,
+                name: action.value
+            };
+        default:
+            return state ?? { name: "" };
+
+    }
+}
+
+const error = (state: ReducerState | undefined, action: ErrorAction): ReducerState => {
+    if (!state) {
+        return { name: "" };
+    }
+    switch (action?.type) {
+        case "SetName2":
+            state.name = action.value;
+            return state;
+        default:
+            return state ?? { name: "" };
+    }
+}
+```
+
+#### state类型
+
+由于TypeScript的类型推断，所以state有两种写法，否则后面系统将无法推断state的类型
+
+```typescript
+// 使用 类型 | undefined
+const correct = (state: ReducerState | undefined, action: CorrectAction)
+
+// 如果是number，string这种可以给默认值的类型给一个默认值就可以
+const counter = (state: number = 0, action: CounterAction)
+const texter = (state: string = "", action: TexterAction)
+```
+
+#### type不要重名
+
+我们的action里面可以定义很多种操作类型，但是要注意，一定要保持名字唯一，否则可能会造成很多问题
+
+## Store
+
+相当于我们的一个数据集，里面保存着我们的数据
+我们可以通过`createStore(reducer)`来进行创建store
+
+**每个store只能有一个reducer，如果有多个，请先使用`combineReducers`进行合并**
+
+```typescript
+// 只有一个reducer
+const strore = createStore(texter);
+
+// 有多个reducer
+const reducers = combineReducers({ newCounter: counterNew, texter, counter });
+const store = createStore(reducers);
+```
+
+`combineReducers`中的对象结构影响着我们后期获取数据的结构
+
+```typescript
+const reducers = combineReducers({ newCounter: counterNew, texter, counter });
+//{
+//	"newCounter" : "",
+//    "texter", "",
+//    "counter": "",
+//}
+```
+
+### 获取数据
+
+#### 通过store
+
+如果我们有store对象，那么我们通过`store.getState()`就可以获取到我们所有的数据，但是这个方法当数据变化时我们是无法实时更新的
+
+#### 在组件中
+
+我们可以在组件中通过使用`useSelector<State类型>(s=>s)`来获取我们的数据
+
+## 设置数据
+
+在组件中我们可以通过`useDispatch()`进行设置值
+
+## 例子
+
+首先是我们store的定义
+
+```typescript
+import { combineReducers, createStore } from "redux";
+import { TypedUseSelectorHook, useSelector } from "react-redux";
+
+export interface CounterAction {
+    type: "INC" | "DEC";
+}
+
+const counter = (state: number = 0, action: CounterAction): number => {
+    console.log("counter", state, action);
+    switch (action.type) {
+        case "INC":
+            return state + 1;
+        case "DEC":
+            return state - 1;
+        default:
+            return state;
+    }
+};
+
+export interface TexterAction {
+    type: "SET" | "APPEND";
+    text: string;
+}
+
+const texter = (state: string = "", action: TexterAction) => {
+    console.log("texter", state, action);
+    if (!state) {
+        return action?.text ?? "";
+    }
+    switch (action.type) {
+        case "SET":
+            return action.text;
+        case "APPEND":
+            return state?.concat(action.text);
+        default:
+            return state;
+    }
+}
+
+export const reducers = combineReducers({ texter, counter });
+const store = createStore(reducers);
+export default store;
+    
+// 定义我们State类型，便于其他组件调用
+export type RootState = ReturnType<typeof store.getState>;
+                                   
+// 这个类型中有我们所有的action类型，便于后面写代码
+export type AppDispatch = typeof store.dispatch;
+                                   
+// 使用这种写法方便后面判断state类型
+export const appSelector: TypedUseSelectorHook<RootState> = useSelector;
+```
+
+然后是我们的组件
+
+```tsx
+import { FC, MouseEvent } from "react";
+import { useDispatch } from "react-redux";
+import { AppDispatch, appSelector, CounterAction } from "../store"
+
+export const Comp1: FC = () => {
+    // 创建dispatch钩子
+    const dispatch = useDispatch<AppDispatch>();
+    // 获取数据
+    // 这里面s => s表示使用s中所有的数据，如果只想要counter，我们可以写成 s=> s.counter
+    let appData = appSelector(s => s);
+    
+    const incCounter = (e: MouseEvent<HTMLButtonElement>) => {
+        let action: CounterAction = { type: "INC" };
+        dispatch(action);
+    }
+    const decCounter = (e: MouseEvent<HTMLButtonElement>) => {
+        let action: CounterAction = { type: "DEC" };
+        dispatch(action);
+    }
+    return (
+        <div>
+            <div>counter: {appData.counter}</div>
+            <div>texter: {appData.texter}</div>
+            <button onClick={incCounter}>Add Counter</button>
+            <button onClick={decCounter}>Dec Counter</button>
+        </div>
+    )
+}
+```
 
 # react-router
 ![router history 核心流程](https://www.zoo.team/images/upload/upload_fc4d71102131b3c8094572ecd4641111.jpg)
@@ -1063,8 +1332,6 @@ strict（bool）：true的时候，有结尾斜线的路径只能匹配有斜线
   * 只要匹配到了第一个, 后面就不应该继续匹配了
   * 这个时候我们可以使用Switch来将所有Route组件进行包裹
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5ed2ff8df0a4438c9de616e3e34f1126~tplv-k3u1fbpfcp-zoom-1.image)
-
-# Redux
 
 # Fetch & Axios
 

@@ -1,17 +1,16 @@
 import { FC, MouseEvent } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import store, { appSelector, CounterAction, RootState } from "../store"
-
+import { useDispatch } from "react-redux";
+import { AppDispatch, appSelector, CounterAction } from "../store"
 
 export const Comp1: FC = () => {
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
     let appData = appSelector(s => s);
     const incCounter = (e: MouseEvent<HTMLButtonElement>) => {
-        let action: CounterAction = { type: "INC"};
+        let action: CounterAction = { type: "INC" };
         dispatch(action);
     }
     const decCounter = (e: MouseEvent<HTMLButtonElement>) => {
-        let action: CounterAction = { type: "DEC", value:{ appData.counter} };
+        let action: CounterAction = { type: "DEC" };
         dispatch(action);
     }
     return (

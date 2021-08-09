@@ -1,24 +1,19 @@
 import { combineReducers, createStore } from "redux";
-import { TypedUseSelectorHook, useSelector } from "react-redux"
+import { TypedUseSelectorHook, useSelector } from "react-redux";
 
 export interface CounterAction {
     type: "INC" | "DEC";
-    value: number;
 }
 
-export interface CounterType {
-    value: number;
-}
-
-const counter = (state: CounterType | undefined, action: CounterAction): CounterType => {
+const counter = (state: number = 0, action: CounterAction): number => {
     console.log("counter", state, action);
     switch (action.type) {
         case "INC":
-            return { value: state?.value ?? 0 + 1 };
+            return state + 1;
         case "DEC":
-            return { value: state?.value ?? 0 - 1 };
+            return state - 1;
         default:
-            return state ?? { value: 0 };
+            return state;
     }
 };
 
@@ -27,7 +22,7 @@ export interface TexterAction {
     text: string;
 }
 
-const texter = (state: string | undefined, action: TexterAction) => {
+const texter = (state: string = "", action: TexterAction) => {
     console.log("texter", state, action);
     if (!state) {
         return action?.text ?? "";
@@ -42,8 +37,18 @@ const texter = (state: string | undefined, action: TexterAction) => {
     }
 }
 
+const setTexter = (text: string): TexterAction => {
+    return { "text": text, type: "SET" }
+}
+
+const appendTexter = (text: string): TexterAction => {
+    return { "text": text, type: "APPEND" }
+}
+
 export const reducers = combineReducers({ texter, counter });
 const store = createStore(reducers);
 export default store;
 export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
 export const appSelector: TypedUseSelectorHook<RootState> = useSelector;
+export { setTexter, appendTexter };
